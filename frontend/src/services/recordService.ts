@@ -2,6 +2,17 @@
 import api from './api';
 import { Record, RecordCreate, RecordUpdate } from '../types/record';
 
+interface GetRecordsParams {
+  skip: number;
+  limit: number;
+  category?: string;
+}
+
+interface GetRecordsResponse {
+  records: Record[];
+  total: number;
+}
+
 async function getAll(): Promise<Record[]> {
   const response = await api.get<Record[]>('/records/');
   return response.data;
@@ -22,10 +33,8 @@ async function deleteRecord(recordId: string): Promise<{ message: string }> {
   return response.data;
 }
 
-async function getRecords(): Promise<Record[]> {
-  // If your backend /records returns an array of records directly:
-  const response = await axios.get<Record[]>(`/records`);
-  // e.g. response.data => [ { id: "...", date: "...", ... }, ... ]
+async function getRecords(params: GetRecordsParams): Promise<GetRecordsResponse> {
+  const response = await api.get<GetRecordsResponse>('/records/', { params });
   return response.data;
 }
 

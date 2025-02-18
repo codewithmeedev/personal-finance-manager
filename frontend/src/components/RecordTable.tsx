@@ -1,4 +1,3 @@
-
 // src/components/RecordTable.tsx
 import React, { useContext } from 'react';
 import { Table, Button } from 'react-bootstrap';
@@ -11,13 +10,10 @@ interface RecordTableProps {
   onDelete: (record: Record) => void;
 }
 
-
-
 const RecordTable: React.FC<RecordTableProps> = ({ records, onEdit, onDelete }) => {
   const { theme } = useContext(ThemeContext);
 
-  // Determine if dark theme is active based on a property from your theme.
-  // Here we assume dark theme uses background "#121212". Adjust as needed.
+  // Determine dark mode based on the theme background
   const isDark = theme.background === '#121212';
 
   return (
@@ -56,5 +52,3 @@ const RecordTable: React.FC<RecordTableProps> = ({ records, onEdit, onDelete }) 
 };
 
 export default RecordTable;
-
-

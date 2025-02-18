@@ -1,5 +1,4 @@
 // src/pages/DashboardPage.tsx
-
 import React, { useState, useEffect, useContext } from "react";
 import {
   Container,
@@ -45,7 +44,7 @@ ChartJS.register(
   Filler
 );
 
-/* Helper function to format a date in local "yyyy-MM-dd" format */
+// Helper function: format a date as "yyyy-MM-dd"
 const formatLocalDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = ("0" + (date.getMonth() + 1)).slice(-2);
@@ -54,8 +53,6 @@ const formatLocalDate = (date: Date): string => {
 };
 
 /* --- Additional Helpers for Category Doughnut Charts --- */
-
-/** Aggregates expenses and incomes by category into two Maps. */
 function computeCategoryTotals(records: Record[]) {
   const expenseMap = new Map<string, number>();
   const incomeMap = new Map<string, number>();
@@ -76,24 +73,12 @@ function computeCategoryTotals(records: Record[]) {
   return { expenseMap, incomeMap };
 }
 
-/** Converts a Map of category->amount into a doughnut data object for Chart.js. */
 function mapToDoughnutData(categoryMap: Map<string, number>) {
   const labels = Array.from(categoryMap.keys());
   const values = Array.from(categoryMap.values());
-
-  // Basic color palette. Extend or cycle as needed if you have many categories.
   const backgroundColors = [
-    "#4caf50", // green
-    "#f44336", // red
-    "#ff9800", // orange
-    "#2196f3", // blue
-    "#9c27b0", // purple
-    "#ffeb3b", // yellow
-    "#795548", // brown
-    "#00bcd4", // cyan
-    // add more if needed
+    "#4caf50", "#f44336", "#ff9800", "#2196f3", "#9c27b0", "#ffeb3b", "#795548", "#00bcd4",
   ];
-
   return {
     labels,
     datasets: [
@@ -106,7 +91,6 @@ function mapToDoughnutData(categoryMap: Map<string, number>) {
 }
 
 /* ---------------- Existing Aggregation Functions ---------------- */
-
 const computeBalanceOverTime = (
   records: Record[],
   daysBack: number = 30
@@ -142,10 +126,7 @@ const computeLast7DaysExpenses = (
       const diff = (now.getTime() - recordDate.getTime()) / (1000 * 3600 * 24);
       if (diff >= 0 && diff < 7) {
         const key = formatLocalDate(recordDate);
-        dailyExpenseMap.set(
-          key,
-          (dailyExpenseMap.get(key) || 0) + record.amount
-        );
+        dailyExpenseMap.set(key, (dailyExpenseMap.get(key) || 0) + record.amount);
       }
     }
   });
@@ -175,13 +156,14 @@ const computeTotalsForMonth = (
   return { income, expense };
 };
 
-/* ---------------- Main DashboardPage Component ---------------- */
-
+/* ---------------- MAIN DASHBOARD PAGE COMPONENT ---------------- */
 const DashboardPage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalRecords, setTotalRecords] = useState<number>(0);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editRecord, setEditRecord] = useState<Record | null>(null);
@@ -191,15 +173,18 @@ const DashboardPage: React.FC = () => {
     description: "",
     type: "expense",
   });
+  const limit = 10; // Number of records per page
 
-  useEffect(() => {
-    fetchRecords();
-  }, []);
-
+  // Fetch records from the backend using pagination
   const fetchRecords = async () => {
+    setLoading(true);
     try {
-      const data = await recordService.getAll();
-      setRecords(data);
+      const skip = (currentPage - 1) * limit;
+      const data = await recordService.getRecords({ skip, limit });
+      // data is expected to be { records: Record[], total: number }
+      setRecords(data.records);
+      setTotalRecords(data.total);
+      setErrorMsg("");
     } catch (error) {
       console.error("Error fetching records:", error);
       setErrorMsg("Failed to fetch records.");
@@ -208,38 +193,22 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // Additional Summaries
-  const now = new Date();
-  const thisMonthTotals = computeTotalsForMonth(
-    records,
-    now.getMonth(),
-    now.getFullYear()
-  );
-  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
-  const lastMonthTotals = computeTotalsForMonth(
-    records,
-    lastMonthDate.getMonth(),
-    lastMonthDate.getFullYear()
-  );
+  useEffect(() => {
+    fetchRecords();
+  }, [currentPage]);
 
-  // Existing line & bar data
-  const { labels: lineLabels, data: lineValues } = computeBalanceOverTime(
-    records,
-    30
-  );
-  const { labels: barLabels, data: barValues } =
-    computeLast7DaysExpenses(records);
+  // Calculate summaries and chart data based on records
+  const now = new Date();
+  const thisMonthTotals = computeTotalsForMonth(records, now.getMonth(), now.getFullYear());
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
+  const lastMonthTotals = computeTotalsForMonth(records, lastMonthDate.getMonth(), lastMonthDate.getFullYear());
+  const { labels: lineLabels, data: lineValues } = computeBalanceOverTime(records, 30);
+  const { labels: barLabels, data: barValues } = computeLast7DaysExpenses(records);
 
   // Chart Options
   const commonScales = {
-    x: {
-      ticks: { color: theme.text, font: { size: 12 } },
-      grid: { color: theme.navBackground },
-    },
-    y: {
-      ticks: { color: theme.text, font: { size: 12 } },
-      grid: { color: theme.navBackground },
-    },
+    x: { ticks: { color: theme.text, font: { size: 12 } }, grid: { color: theme.navBackground } },
+    y: { ticks: { color: theme.text, font: { size: 12 } }, grid: { color: theme.navBackground } },
   };
 
   const lineData = {
@@ -259,16 +228,8 @@ const DashboardPage: React.FC = () => {
   const lineOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: "top" as const,
-        labels: { color: theme.text, font: { size: 12 } },
-      },
-      title: {
-        display: true,
-        text: "Balance Over Time (Last 30 Days)",
-        color: theme.text,
-        font: { size: 18 },
-      },
+      legend: { position: "top" as const, labels: { color: theme.text, font: { size: 12 } } },
+      title: { display: true, text: "Balance Over Time (Last 30 Days)", color: theme.text, font: { size: 18 } },
     },
     scales: commonScales,
   };
@@ -287,16 +248,8 @@ const DashboardPage: React.FC = () => {
   const barOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: "top" as const,
-        labels: { color: theme.text, font: { size: 12 } },
-      },
-      title: {
-        display: true,
-        text: "Last 7 Days (Expenses)",
-        color: theme.text,
-        font: { size: 18 },
-      },
+      legend: { position: "top" as const, labels: { color: theme.text, font: { size: 12 } } },
+      title: { display: true, text: "Last 7 Days (Expenses)", color: theme.text, font: { size: 18 } },
     },
     scales: commonScales,
   };
@@ -304,10 +257,7 @@ const DashboardPage: React.FC = () => {
   const doughnutOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: "top" as const,
-        labels: { color: theme.text, font: { size: 12 } },
-      },
+      legend: { position: "top" as const, labels: { color: theme.text, font: { size: 12 } } },
       title: { display: false },
     },
   };
@@ -332,7 +282,7 @@ const DashboardPage: React.FC = () => {
     ],
   };
 
-  // --- Additional: Category-based Doughnuts
+  // Category-based Doughnuts
   const { expenseMap, incomeMap } = computeCategoryTotals(records);
   const expenseCategoryData = mapToDoughnutData(expenseMap);
   const incomeCategoryData = mapToDoughnutData(incomeMap);
@@ -340,15 +290,32 @@ const DashboardPage: React.FC = () => {
   const categoryDoughnutOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: "top" as const,
-        labels: { color: theme.text, font: { size: 12 } },
-      },
+      legend: { position: "top" as const, labels: { color: theme.text, font: { size: 12 } } },
       title: { display: false },
     },
   };
 
-  /* Handlers for Record CRUD */
+  // CSV download function
+  const downloadCSV = () => {
+    if (records.length === 0) return;
+    const header = ["Date", "Type", "Amount", "Category", "Description"];
+    const rows = records.map((record) => {
+      const dateStr = formatLocalDate(new Date(record.date));
+      const desc = record.description ? `"${record.description.replace(/"/g, '""')}"` : "";
+      return [dateStr, record.type, record.amount.toString(), record.category, desc].join(",");
+    });
+    const csvContent = [header.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "records.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // CRUD Handlers
   const handleAddRecord = async (newRec: RecordCreate) => {
     try {
       await recordService.createRecord(newRec);
@@ -394,14 +361,21 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  /* Global page styling using theme values */
-  const pageStyle = {
+  // Pagination controls
+  const totalPages = Math.ceil(totalRecords / limit);
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  // Global page styling using theme values
+  const pageStyleGlobal = {
     backgroundColor: theme.background,
     color: theme.text,
     minHeight: "100vh",
   };
 
-  const cardStyle = {
+  const cardStyleGlobal = {
     backgroundColor: theme.background,
     color: theme.text,
     border: `1px solid ${theme.cardBorder}`,
@@ -410,120 +384,65 @@ const DashboardPage: React.FC = () => {
   return (
     <>
       <MainNavbar />
-      <div style={pageStyle}>
+      <div style={pageStyleGlobal}>
         <Container fluid className="mt-5 content-padding">
           {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
-          {/* Existing Row for line/bar charts */}
+
+          {/* Charts */}
           <Row>
             <Col xs={12} md={6}>
-              <Card className="mb-3" style={cardStyle}>
+              <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
-                  <Line
-                    key={JSON.stringify(lineData)}
-                    data={lineData}
-                    options={lineOptions}
-                  />
+                  <Line key={JSON.stringify(lineData)} data={lineData} options={lineOptions} />
                 </Card.Body>
               </Card>
             </Col>
             <Col xs={12} md={6}>
-              <Card className="mb-3" style={cardStyle}>
+              <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
-                  <Bar
-                    key={JSON.stringify(barData)}
-                    data={barData}
-                    options={barOptions}
-                  />
+                  <Bar key={JSON.stringify(barData)} data={barData} options={barOptions} />
                 </Card.Body>
               </Card>
             </Col>
           </Row>
 
-          {/* Row for This Month / Last Month Doughnuts */}
+          {/* Doughnut Charts */}
           <Row>
             <Col xs={6} md={3}>
-              <Card className="mb-3" style={cardStyle}>
+              <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
                   <Card.Title>This Month</Card.Title>
-                  <Doughnut
-                    key={JSON.stringify(thisMonthDoughnutData)}
-                    data={thisMonthDoughnutData}
-                    options={doughnutOptions}
-                  />
-                  {/* <div
-                    className="mt-2 compact-text"
-                    style={{ fontSize: "0.8rem" }}
-                  >
-                    <p style={{ margin: 0 }}>
-                      Income: ${thisMonthTotals.income.toFixed(2)}
-                    </p>
-                    <p style={{ margin: 0 }}>
-                      Expenses: ${thisMonthTotals.expense.toFixed(2)}
-                    </p>
-                  </div> */}
+                  <Doughnut key={JSON.stringify(thisMonthDoughnutData)} data={thisMonthDoughnutData} options={doughnutOptions} />
                 </Card.Body>
               </Card>
             </Col>
             <Col xs={6} md={3}>
-              <Card className="mb-3" style={cardStyle}>
+              <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
                   <Card.Title>Last Month</Card.Title>
-                  <Doughnut
-                    key={JSON.stringify(lastMonthDoughnutData)}
-                    data={lastMonthDoughnutData}
-                    options={doughnutOptions}
-                  />
-                  {/* <div
-                    className="mt-2 compact-text"
-                    style={{ fontSize: "0.8rem" }}
-                  >
-                    <p style={{ margin: 0 }}>
-                      Income: ${lastMonthTotals.income.toFixed(2)}
-                    </p>
-                    <p style={{ margin: 0 }}>
-                      Expenses: ${lastMonthTotals.expense.toFixed(2)}
-                    </p>
-                  </div> */}
+                  <Doughnut key={JSON.stringify(lastMonthDoughnutData)} data={lastMonthDoughnutData} options={doughnutOptions} />
                 </Card.Body>
               </Card>
             </Col>
             <Col xs={6} md={3}>
-              <Card className="mb-3" style={cardStyle}>
+              <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
                   <Card.Title>Expenses by Category</Card.Title>
-                  <Doughnut
-                    data={expenseCategoryData}
-                    options={categoryDoughnutOptions}
-                  />
+                  <Doughnut data={expenseCategoryData} options={categoryDoughnutOptions} />
                 </Card.Body>
               </Card>
             </Col>
             <Col xs={6} md={3}>
-              <Card className="mb-3" style={cardStyle}>
+              <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
                   <Card.Title>Incomes by Category</Card.Title>
-                  <Doughnut
-                    data={incomeCategoryData}
-                    options={categoryDoughnutOptions}
-                  />
+                  <Doughnut data={incomeCategoryData} options={categoryDoughnutOptions} />
                 </Card.Body>
               </Card>
             </Col>
           </Row>
 
-          {/* Row for new category-based doughnuts
-          <Row>
-            <Col xs={12} md={6}>
-              <Card className="mb-3" style={cardStyle}>
-                <Card.Body>
-                  <Card.Title>Additional Summary</Card.Title>
-                  <p>Placeholder for additional metrics or budget progress.</p>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row> */}
-
-          {/* Records Table + Add Record Button */}
+          {/* Records Table Header with Add and Download Buttons */}
           <Row className="mt-5 align-items-center">
             <Col xs={12} md={6} className="text-start">
               <h4 className="mb-0">Your Records</h4>
@@ -532,35 +451,43 @@ const DashboardPage: React.FC = () => {
               <Button variant="success" onClick={() => setShowAddModal(true)}>
                 Add Record
               </Button>
+              <Button variant="secondary" onClick={downloadCSV} className="ms-2">
+                Download CSV
+              </Button>
             </Col>
           </Row>
+
+          {/* Records Table */}
           <Row className="mt-3">
             <Col xs={12}>
               {loading ? (
                 <p>Loading records...</p>
               ) : (
-                <RecordTable
-                  records={records}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
+                <RecordTable records={records} onEdit={handleEdit} onDelete={handleDelete} />
               )}
+            </Col>
+          </Row>
+
+          {/* Pagination Controls */}
+          <Row className="mt-3">
+            <Col className="d-flex justify-content-center align-items-center">
+              <Button variant="secondary" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+                Previous
+              </Button>
+              <span className="mx-3">
+                Page {currentPage} of {totalPages || 1}
+              </span>
+              <Button variant="secondary" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages || totalPages === 0}>
+                Next
+              </Button>
             </Col>
           </Row>
         </Container>
       </div>
 
       {/* Edit Record Modal */}
-      <Modal
-        show={showEditModal}
-        onHide={() => setShowEditModal(false)}
-        centered
-        style={{ color: theme.text }}
-      >
-        <Modal.Header
-          closeButton
-          style={{ backgroundColor: theme.navBackground }}
-        >
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered style={{ color: theme.text }}>
+        <Modal.Header closeButton style={{ backgroundColor: theme.navBackground }}>
           <Modal.Title>Edit Record</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ backgroundColor: theme.background }}>
@@ -631,16 +558,8 @@ const DashboardPage: React.FC = () => {
       </Modal>
 
       {/* Add Record Modal */}
-      <Modal
-        show={showAddModal}
-        onHide={() => setShowAddModal(false)}
-        centered
-        style={{ color: theme.text }}
-      >
-        <Modal.Header
-          closeButton
-          style={{ backgroundColor: theme.navBackground }}
-        >
+      <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered style={{ color: theme.text }}>
+        <Modal.Header closeButton style={{ backgroundColor: theme.navBackground }}>
           <Modal.Title>Add Record</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ backgroundColor: theme.background }}>
