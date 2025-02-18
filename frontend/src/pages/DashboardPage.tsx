@@ -44,7 +44,7 @@ ChartJS.register(
   Filler
 );
 
-// Helper function to format a date as "yyyy-MM-dd"
+// Helper: format date as "yyyy-MM-dd"
 const formatLocalDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = ("0" + (date.getMonth() + 1)).slice(-2);
@@ -52,12 +52,12 @@ const formatLocalDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-/* --- Additional Helpers for Category Doughnut Charts --- */
+/* --- Helpers for Category Doughnut Charts --- */
 function computeCategoryTotals(records: Record[]) {
   const expenseMap = new Map<string, number>();
   const incomeMap = new Map<string, number>();
 
-  for (const rec of records) {
+  records.forEach((rec) => {
     if (rec.type === "expense") {
       expenseMap.set(
         rec.category,
@@ -69,7 +69,7 @@ function computeCategoryTotals(records: Record[]) {
         (incomeMap.get(rec.category) || 0) + rec.amount
       );
     }
-  }
+  });
   return { expenseMap, incomeMap };
 }
 
@@ -77,14 +77,14 @@ function mapToDoughnutData(categoryMap: Map<string, number>) {
   const labels = Array.from(categoryMap.keys());
   const values = Array.from(categoryMap.values());
   const backgroundColors = [
-    "#4caf50", // green
-    "#f44336", // red
-    "#ff9800", // orange
-    "#2196f3", // blue
-    "#9c27b0", // purple
-    "#ffeb3b", // yellow
-    "#795548", // brown
-    "#00bcd4", // cyan
+    "#4caf50",
+    "#f44336",
+    "#ff9800",
+    "#2196f3",
+    "#9c27b0",
+    "#ffeb3b",
+    "#795548",
+    "#00bcd4",
   ];
   return {
     labels,
@@ -97,7 +97,7 @@ function mapToDoughnutData(categoryMap: Map<string, number>) {
   };
 }
 
-/* ---------------- Existing Aggregation Functions ---------------- */
+/* ---------------- Aggregation Functions ---------------- */
 const computeBalanceOverTime = (
   records: Record[],
   daysBack: number = 30
@@ -169,18 +169,18 @@ const computeTotalsForMonth = (
 /* ---------------- MAIN DASHBOARD PAGE COMPONENT ---------------- */
 const DashboardPage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
-  
-  // State for paginated records (table)
+
+  // State for paginated records (table) and full records (charts)
   const [records, setRecords] = useState<Record[]>([]);
-  // State for all records (charts)
   const [allRecords, setAllRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>("");
+
   // Pagination state for table
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const limit = 10; // records per page
-  
+
   // States for modals and editing
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -193,11 +193,10 @@ const DashboardPage: React.FC = () => {
   });
 
   // Fetch paginated records for the table
-  const fetchRecords = async () => {
+  const fetchPaginatedRecords = async () => {
     try {
       const skip = (currentPage - 1) * limit;
       const data = await recordService.getRecords({ skip, limit });
-      // Expected data: { records: Record[], total: number }
       setRecords(data.records);
       setTotalRecords(data.total);
       setErrorMsg("");
@@ -213,36 +212,56 @@ const DashboardPage: React.FC = () => {
   const fetchAllRecords = async () => {
     try {
       const data = await recordService.getAll();
-      // If getAll returns an array, use it directly; otherwise, use data.records
-      const allRecs = Array.isArray(data) ? data : (data as { records: Record[] }).records;
+      const allRecs = Array.isArray(data)
+        ? data
+        : (data as { records: Record[] }).records;
       setAllRecords(allRecs);
     } catch (error) {
       console.error("Error fetching all records:", error);
     }
   };
 
-  // On mount, fetch all records and paginated records
+  // Initial fetch: all records (for charts) and paginated records (for table)
   useEffect(() => {
     fetchAllRecords();
   }, []);
 
+  // Refetch paginated records when currentPage changes
   useEffect(() => {
-    fetchRecords();
+    fetchPaginatedRecords();
   }, [currentPage]);
 
-  // Compute chart data based on all records (for charts)
+  // Compute chart data from full record set
   const chartRecords = allRecords;
   const now = new Date();
-  const thisMonthTotals = computeTotalsForMonth(chartRecords, now.getMonth(), now.getFullYear());
+  const thisMonthTotals = computeTotalsForMonth(
+    chartRecords,
+    now.getMonth(),
+    now.getFullYear()
+  );
   const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
-  const lastMonthTotals = computeTotalsForMonth(chartRecords, lastMonthDate.getMonth(), lastMonthDate.getFullYear());
-  const { labels: lineLabels, data: lineValues } = computeBalanceOverTime(chartRecords, 30);
-  const { labels: barLabels, data: barValues } = computeLast7DaysExpenses(chartRecords);
+  const lastMonthTotals = computeTotalsForMonth(
+    chartRecords,
+    lastMonthDate.getMonth(),
+    lastMonthDate.getFullYear()
+  );
+  const { labels: lineLabels, data: lineValues } = computeBalanceOverTime(
+    chartRecords,
+    30
+  );
+  const { labels: barLabels, data: barValues } =
+    computeLast7DaysExpenses(chartRecords);
 
-  // Chart Options using theme
+  // Chart options using theme
   const commonScales = {
-    x: { ticks: { color: theme.text, font: { size: 12 } }, grid: { color: theme.navBackground } },
-    y: { ticks: { color: theme.text, font: { size: 12 } }, grid: { color: theme.navBackground } },
+    x: {
+      ticks: { color: theme.text, font: { size: 12 } },
+      grid: { color: theme.navBackground },
+    },
+    y: {
+      ticks: { color: theme.text, font: { size: 12 } },
+      grid: { color: theme.navBackground },
+    },
   };
 
   const lineData = {
@@ -262,8 +281,16 @@ const DashboardPage: React.FC = () => {
   const lineOptions = {
     responsive: true,
     plugins: {
-      legend: { position: "top" as const, labels: { color: theme.text, font: { size: 12 } } },
-      title: { display: true, text: "Balance Over Time (Last 30 Days)", color: theme.text, font: { size: 18 } },
+      legend: {
+        position: "top" as const,
+        labels: { color: theme.text, font: { size: 12 } },
+      },
+      title: {
+        display: true,
+        text: "Balance Over Time (Last 30 Days)",
+        color: theme.text,
+        font: { size: 18 },
+      },
     },
     scales: commonScales,
   };
@@ -282,8 +309,16 @@ const DashboardPage: React.FC = () => {
   const barOptions = {
     responsive: true,
     plugins: {
-      legend: { position: "top" as const, labels: { color: theme.text, font: { size: 12 } } },
-      title: { display: true, text: "Last 7 Days (Expenses)", color: theme.text, font: { size: 18 } },
+      legend: {
+        position: "top" as const,
+        labels: { color: theme.text, font: { size: 12 } },
+      },
+      title: {
+        display: true,
+        text: "Last 7 Days (Expenses)",
+        color: theme.text,
+        font: { size: 18 },
+      },
     },
     scales: commonScales,
   };
@@ -291,7 +326,10 @@ const DashboardPage: React.FC = () => {
   const doughnutOptions = {
     responsive: true,
     plugins: {
-      legend: { position: "top" as const, labels: { color: theme.text, font: { size: 12 } } },
+      legend: {
+        position: "top" as const,
+        labels: { color: theme.text, font: { size: 12 } },
+      },
       title: { display: false },
     },
   };
@@ -316,7 +354,7 @@ const DashboardPage: React.FC = () => {
     ],
   };
 
-  // Category-based Doughnuts
+  // Category-based doughnut charts
   const { expenseMap, incomeMap } = computeCategoryTotals(chartRecords);
   const expenseCategoryData = mapToDoughnutData(expenseMap);
   const incomeCategoryData = mapToDoughnutData(incomeMap);
@@ -324,7 +362,10 @@ const DashboardPage: React.FC = () => {
   const categoryDoughnutOptions = {
     responsive: true,
     plugins: {
-      legend: { position: "top" as const, labels: { color: theme.text, font: { size: 12 } } },
+      legend: {
+        position: "top" as const,
+        labels: { color: theme.text, font: { size: 12 } },
+      },
       title: { display: false },
     },
   };
@@ -335,8 +376,16 @@ const DashboardPage: React.FC = () => {
     const header = ["Date", "Type", "Amount", "Category", "Description"];
     const rows = records.map((record) => {
       const dateStr = formatLocalDate(new Date(record.date));
-      const desc = record.description ? `"${record.description.replace(/"/g, '""')}"` : "";
-      return [dateStr, record.type, record.amount.toString(), record.category, desc].join(",");
+      const desc = record.description
+        ? `"${record.description.replace(/"/g, '""')}"`
+        : "";
+      return [
+        dateStr,
+        record.type,
+        record.amount.toString(),
+        record.category,
+        desc,
+      ].join(",");
     });
     const csvContent = [header.join(","), ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -352,12 +401,10 @@ const DashboardPage: React.FC = () => {
   // CRUD Handlers
   const handleAddRecord = async (newRec: RecordCreate) => {
     try {
-      const createdRecord = await recordService.createRecord(newRec);
+      await recordService.createRecord(newRec);
       setShowAddModal(false);
-      // Update the paginated records
-      await fetchRecords();
-      // Update charts by appending the new record to allRecords:
-      setAllRecords((prev) => [...prev, createdRecord]);
+      await fetchPaginatedRecords();
+      await fetchAllRecords();
     } catch (error) {
       console.error("Error adding record:", error);
       setErrorMsg("Failed to add record.");
@@ -372,19 +419,15 @@ const DashboardPage: React.FC = () => {
   const handleUpdate = async () => {
     if (!editRecord) return;
     try {
-      const updatedRecord = await recordService.update(editRecord.id, {
+      await recordService.update(editRecord.id, {
         amount: editRecord.amount,
         category: editRecord.category,
         description: editRecord.description,
         type: editRecord.type,
       } as RecordUpdate);
       setShowEditModal(false);
-      // Refresh paginated records and full records
-      await fetchRecords();
-      // Optionally update allRecords by replacing the updated record:
-      setAllRecords((prev) =>
-        prev.map((rec) => (rec.id === updatedRecord.id ? updatedRecord : rec))
-      );
+      await fetchPaginatedRecords();
+      await fetchAllRecords();
     } catch (error) {
       console.error("Error updating record:", error);
       setErrorMsg("Failed to update record.");
@@ -395,9 +438,8 @@ const DashboardPage: React.FC = () => {
     if (window.confirm("Are you sure you want to delete this record?")) {
       try {
         await recordService.deleteRecord(rec.id);
-        await fetchRecords();
-        // Remove the record from allRecords
-        setAllRecords((prev) => prev.filter((record) => record.id !== rec.id));
+        await fetchPaginatedRecords();
+        await fetchAllRecords();
       } catch (error) {
         console.error("Error deleting record:", error);
         setErrorMsg("Failed to delete record.");
@@ -412,7 +454,7 @@ const DashboardPage: React.FC = () => {
     setCurrentPage(page);
   };
 
-  // Global styling using theme values
+  // Global styling
   const pageStyleGlobal = {
     backgroundColor: theme.background,
     color: theme.text,
@@ -437,14 +479,14 @@ const DashboardPage: React.FC = () => {
             <Col xs={12} md={6}>
               <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
-                  <Line key={JSON.stringify(lineData)} data={lineData} options={lineOptions} />
+                  <Line data={lineData} options={lineOptions} />
                 </Card.Body>
               </Card>
             </Col>
             <Col xs={12} md={6}>
               <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
-                  <Bar key={JSON.stringify(barData)} data={barData} options={barOptions} />
+                  <Bar data={barData} options={barOptions} />
                 </Card.Body>
               </Card>
             </Col>
@@ -456,7 +498,10 @@ const DashboardPage: React.FC = () => {
               <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
                   <Card.Title>This Month</Card.Title>
-                  <Doughnut key={JSON.stringify(thisMonthDoughnutData)} data={thisMonthDoughnutData} options={doughnutOptions} />
+                  <Doughnut
+                    data={thisMonthDoughnutData}
+                    options={doughnutOptions}
+                  />
                 </Card.Body>
               </Card>
             </Col>
@@ -464,7 +509,10 @@ const DashboardPage: React.FC = () => {
               <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
                   <Card.Title>Last Month</Card.Title>
-                  <Doughnut key={JSON.stringify(lastMonthDoughnutData)} data={lastMonthDoughnutData} options={doughnutOptions} />
+                  <Doughnut
+                    data={lastMonthDoughnutData}
+                    options={doughnutOptions}
+                  />
                 </Card.Body>
               </Card>
             </Col>
@@ -472,7 +520,10 @@ const DashboardPage: React.FC = () => {
               <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
                   <Card.Title>Expenses by Category</Card.Title>
-                  <Doughnut data={expenseCategoryData} options={categoryDoughnutOptions} />
+                  <Doughnut
+                    data={expenseCategoryData}
+                    options={categoryDoughnutOptions}
+                  />
                 </Card.Body>
               </Card>
             </Col>
@@ -480,7 +531,10 @@ const DashboardPage: React.FC = () => {
               <Card className="mb-3" style={cardStyleGlobal}>
                 <Card.Body>
                   <Card.Title>Incomes by Category</Card.Title>
-                  <Doughnut data={incomeCategoryData} options={categoryDoughnutOptions} />
+                  <Doughnut
+                    data={incomeCategoryData}
+                    options={categoryDoughnutOptions}
+                  />
                 </Card.Body>
               </Card>
             </Col>
@@ -495,7 +549,11 @@ const DashboardPage: React.FC = () => {
               <Button variant="success" onClick={() => setShowAddModal(true)}>
                 Add Record
               </Button>
-              <Button variant="secondary" onClick={downloadCSV} className="ms-2">
+              <Button
+                variant="secondary"
+                onClick={downloadCSV}
+                className="ms-2"
+              >
                 Download CSV
               </Button>
             </Col>
@@ -507,21 +565,33 @@ const DashboardPage: React.FC = () => {
               {loading ? (
                 <p>Loading records...</p>
               ) : (
-                <RecordTable records={records} onEdit={handleEdit} onDelete={handleDelete} />
+                <RecordTable
+                  records={records}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
               )}
             </Col>
           </Row>
 
           {/* Pagination Controls */}
-          <Row className="mt-3">
+          <Row className="mt-3 mb-3">
             <Col className="d-flex justify-content-center align-items-center">
-              <Button variant="secondary" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+              <Button
+                variant="secondary"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
                 Previous
               </Button>
               <span className="mx-3">
                 Page {currentPage} of {totalPages || 1}
               </span>
-              <Button variant="secondary" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages || totalPages === 0}>
+              <Button
+                variant="secondary"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
                 Next
               </Button>
             </Col>
@@ -530,8 +600,16 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Edit Record Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered style={{ color: theme.text }}>
-        <Modal.Header closeButton style={{ backgroundColor: theme.navBackground }}>
+      <Modal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        centered
+        style={{ color: theme.text }}
+      >
+        <Modal.Header
+          closeButton
+          style={{ backgroundColor: theme.navBackground }}
+        >
           <Modal.Title>Edit Record</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ backgroundColor: theme.background }}>
@@ -602,8 +680,16 @@ const DashboardPage: React.FC = () => {
       </Modal>
 
       {/* Add Record Modal */}
-      <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered style={{ color: theme.text }}>
-        <Modal.Header closeButton style={{ backgroundColor: theme.navBackground }}>
+      <Modal
+        show={showAddModal}
+        onHide={() => setShowAddModal(false)}
+        centered
+        style={{ color: theme.text }}
+      >
+        <Modal.Header
+          closeButton
+          style={{ backgroundColor: theme.navBackground }}
+        >
           <Modal.Title>Add Record</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ backgroundColor: theme.background }}>

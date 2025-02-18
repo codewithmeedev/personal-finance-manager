@@ -14,9 +14,11 @@ interface GetRecordsResponse {
 }
 
 async function getAll(): Promise<Record[]> {
-  const response = await api.get<Record[]>('/records/');
-  return response.data;
+  // Call with the query parameter all=true to bypass pagination
+  const response = await api.get<Record[]>('/records', { params: { all: true } });
+  return response.data; // assuming your endpoint returns { records, total }
 }
+
 
 async function createRecord(data: RecordCreate): Promise<Record> {
   const response = await api.post<Record>('/records/', data);

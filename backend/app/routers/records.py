@@ -62,23 +62,49 @@ async def create_record(record: RecordCreate, current_user: dict = Depends(get_c
 #         records.append(serialize_record(record))
 #     return records
 
+# @router.get("/", status_code=200)
+# async def get_records(
+#     current_user: dict = Depends(get_current_user),
+#     skip: int = Query(0, ge=0, description="Number of records to skip"),
+#     limit: int = Query(10, ge=1, le=100, description="Maximum number of records to return"),
+#     category: Optional[str] = Query(None, description="Filter records by category keyword")
+# ):
+#     user_id = str(current_user["_id"])
+#     query_filter = {"user_id": user_id}
+#     if category:
+#         query_filter["category"] = {"$regex": category, "$options": "i"}
+    
+#     total = await records_collection.count_documents(query_filter)
+#     records = []
+#     async for record in records_collection.find(query_filter).skip(skip).limit(limit):
+#         records.append(serialize_record(record))
+#     return {"records": records, "total": total}
+
 @router.get("/", status_code=200)
 async def get_records(
     current_user: dict = Depends(get_current_user),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(10, ge=1, le=100, description="Maximum number of records to return"),
-    category: Optional[str] = Query(None, description="Filter records by category keyword")
+    category: Optional[str] = Query(None, description="Filter records by category keyword"),
+    all: bool = Query(False, description="If true, return all records without pagination")
 ):
     user_id = str(current_user["_id"])
     query_filter = {"user_id": user_id}
     if category:
         query_filter["category"] = {"$regex": category, "$options": "i"}
     
-    total = await records_collection.count_documents(query_filter)
-    records = []
-    async for record in records_collection.find(query_filter).skip(skip).limit(limit):
-        records.append(serialize_record(record))
+    if all:
+        records = []
+        async for record in records_collection.find(query_filter):
+            records.append(serialize_record(record))
+        total = len(records)
+    else:
+        total = await records_collection.count_documents(query_filter)
+        records = []
+        async for record in records_collection.find(query_filter).skip(skip).limit(limit):
+            records.append(serialize_record(record))
     return {"records": records, "total": total}
+
 
 @router.patch("/{record_id}", response_model=RecordRead, status_code=200)
 async def update_record(record_id: str, updated_record: RecordUpdate, current_user: dict = Depends(get_current_user)):
