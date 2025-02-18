@@ -19,6 +19,7 @@ function storeTokens(data: TokenPair) {
   localStorage.setItem('refreshToken', data.refresh_token);
 }
 
+
 async function forgotPassword(email: string) {
   try {
     const response = await axios.post(`${BASE_URL}/users/forgot-password`, { email });
