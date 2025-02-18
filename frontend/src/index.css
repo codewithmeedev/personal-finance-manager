@@ -1,0 +1,170 @@
+/* Global resets and typography */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+}
+/* Flex container for the entire app */
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main content takes up available space */
+.main-content {
+  flex: 1;
+}
+/* Navbar styling */
+.navbar-custom {
+  background-color: #ffffff;
+  border-bottom: 1px solid #ccc;
+}
+.navbar-custom .navbar-brand {
+  font-weight: 700;
+  color: #3c8d2f !important;
+  font-size: 1.3rem;
+}
+.navbar-custom .nav-link {
+  color: #333 !important;
+  margin: 0 1rem;
+  font-weight: 500;
+}
+.navbar-custom .nav-link:hover {
+  color: #3c8d2f !important;
+}
+.navbar-custom .sign-in-btn {
+  margin-left: 1rem;
+  border-color: #3c8d2f;
+  color: #3c8d2f;
+}
+.navbar-custom .sign-in-btn:hover {
+  background-color: #3c8d2f;
+  color: #fff;
+}
+
+/* Hero Section styling */
+.hero-section {
+  height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #a8e6cf, #dcedc1);
+  color: #333;
+  text-align: center;
+}
+.hero-section h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.hero-section p {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* Content padding so fixed navbar doesn't cover content */
+.content-padding {
+  padding-top: 80px;
+}
+
+/* Footer styling */
+.footer {
+  background-color: #ffffff;
+  border-top: 1px solid #ccc;
+  /* padding: 1px 0; */
+  text-align: center;
+}
+
+/* Chat widget styling */
+.chat-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1050;
+}
+.chat-toggle-btn {
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 2rem;
+  padding: 0;
+  background-color: #3c8d2f;
+  border: none;
+}
+.chat-toggle-btn:hover {
+  background-color: #2d6a24;
+}
+.chat-window {
+  width: 400px;
+  max-height: 500px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+.chat-header {
+  background-color: #3c8d2f;
+  color: #fff;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+.chat-messages {
+  flex-grow: 1;
+  padding: 10px;
+  overflow-y: auto;
+  background-color: #f1f1f1;
+}
+.chat-message {
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  max-width: 95%;
+}
+.chat-message.user {
+  background-color: #d1e7dd;
+  align-self: flex-end;
+}
+.chat-message.assistant {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  align-self: flex-start;
+}
+.chat-input-area {
+  display: flex;
+  padding: 10px;
+  gap: 5px;
+  border-top: 1px solid #ddd;
+}
+
+.navbar-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 40%;
+  margin-right: 8px;
+}
+
+/* Dark mode styles */
+.dark-mode {
+  background-color: #222;
+  color: #ddd;
+}
+.dark-mode .navbar-custom {
+  background-color: #333;
+}
+.dark-mode .card {
+  background-color: #333;
+  color: #ddd;
+}
+.compact-text p {
+  margin: 0;
+  /* or margin-bottom: 0.25rem; etc. */
+}
