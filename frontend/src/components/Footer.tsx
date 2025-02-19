@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
       style={{
         backgroundColor: theme.navBackground,
         borderTop: "1px solid #ccc",
-        padding: "20px 0",
+        padding: "5px 0",
         textAlign: "center",
         color: theme.text, // set the text color based on the theme
       }}

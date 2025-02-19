@@ -41,68 +41,36 @@ async def create_record(record: RecordCreate, current_user: dict = Depends(get_c
     return serialize_record(inserted_record)
 
 
-# @router.get("/", response_model=List[RecordRead], status_code=200)
-# async def get_records(current_user: dict = Depends(get_current_user), skip: int = Query(0, ge=0, description="Number of records to skip"),
-#                       limit: int = Query(
-#                           10, ge=1, le=100, description="Maximum number of records to return"),
-#                       category: Optional[str] = Query(None, description="Filter records by category keyword")):
-#     """
-#     Retrieve all records for the authenticated user with optional pagination and category filtering.
-#     """
-#     user_id = str(current_user["_id"])
-
-#     # Build the query filter
-#     query_filter = {"user_id": user_id}
-#     if category:
-#         # Use a case-insensitive regular expression for partial matches
-#         query_filter["category"] = {"$regex": category, "$options": "i"}
-
-#     records = []
-#     async for record in records_collection.find(query_filter).skip(skip).limit(limit):
-#         records.append(serialize_record(record))
-#     return records
-
-# @router.get("/", status_code=200)
-# async def get_records(
-#     current_user: dict = Depends(get_current_user),
-#     skip: int = Query(0, ge=0, description="Number of records to skip"),
-#     limit: int = Query(10, ge=1, le=100, description="Maximum number of records to return"),
-#     category: Optional[str] = Query(None, description="Filter records by category keyword")
-# ):
-#     user_id = str(current_user["_id"])
-#     query_filter = {"user_id": user_id}
-#     if category:
-#         query_filter["category"] = {"$regex": category, "$options": "i"}
-    
-#     total = await records_collection.count_documents(query_filter)
-#     records = []
-#     async for record in records_collection.find(query_filter).skip(skip).limit(limit):
-#         records.append(serialize_record(record))
-#     return {"records": records, "total": total}
-
 @router.get("/", status_code=200)
 async def get_records(
     current_user: dict = Depends(get_current_user),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of records to return"),
-    category: Optional[str] = Query(None, description="Filter records by category keyword"),
-    all: bool = Query(False, description="If true, return all records without pagination")
+    limit: int = Query(
+        10, ge=1, le=100, description="Maximum number of records to return"),
+    category: Optional[str] = Query(
+        None, description="Filter records by category keyword"),
+    sortField: Optional[str] = Query("date", description="Field to sort by"),
+    sortOrder: Optional[int] = Query(
+        -1, description="Sort order: 1 for ascending, -1 for descending"),
+    all: bool = Query(
+        False, description="If true, return all records without pagination")
 ):
     user_id = str(current_user["_id"])
     query_filter = {"user_id": user_id}
     if category:
         query_filter["category"] = {"$regex": category, "$options": "i"}
-    
+
     if all:
         records = []
-        async for record in records_collection.find(query_filter):
+        async for record in records_collection.find(query_filter).sort(sortField, sortOrder):
             records.append(serialize_record(record))
         total = len(records)
     else:
         total = await records_collection.count_documents(query_filter)
         records = []
-        async for record in records_collection.find(query_filter).skip(skip).limit(limit):
+        async for record in records_collection.find(query_filter).sort(sortField, sortOrder).skip(skip).limit(limit):
             records.append(serialize_record(record))
+
     return {"records": records, "total": total}
 
 
@@ -162,4 +130,3 @@ async def delete_record(record_id: str, current_user: dict = Depends(get_current
         raise HTTPException(status_code=500, detail="Internal server error.")
 
     return {"message": "Record deleted successfully."}
-
