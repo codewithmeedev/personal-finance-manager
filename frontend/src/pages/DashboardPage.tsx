@@ -1,4 +1,3 @@
-// src/pages/DashboardPage.tsx
 import React, { useState, useEffect, useContext } from "react";
 import {
   Container,
@@ -27,6 +26,7 @@ import {
 import MainNavbar from "../components/MainNavbar";
 import RecordTable from "../components/RecordTable";
 import ChatAssistant from "../components/ChatAssistant";
+import DownloadCSVButton from "../components/DownloadCSVButton";
 import recordService from "../services/recordService";
 import { Record, RecordCreate, RecordUpdate } from "../types/record";
 import { ThemeContext } from "../context/ThemeContext";
@@ -45,7 +45,6 @@ ChartJS.register(
   Filler
 );
 
-// Helper: Format a date as "yyyy-MM-dd"
 const formatLocalDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = ("0" + (date.getMonth() + 1)).slice(-2);
@@ -53,7 +52,6 @@ const formatLocalDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-/* --- Additional Helpers for Category Doughnut Charts --- */
 function computeCategoryTotals(records: Record[]) {
   const expenseMap = new Map<string, number>();
   const incomeMap = new Map<string, number>();
@@ -110,7 +108,6 @@ function mapToDoughnutData(categoryMap: Map<string, number>, isDark: boolean) {
   };
 }
 
-/* ---------------- Aggregation Functions ---------------- */
 const computeBalanceOverTime = (
   records: Record[],
   daysBack: number = 30
@@ -178,29 +175,23 @@ const computeTotalsForMonth = (
   return { income, expense };
 };
 
-/* ---------------- MAIN DASHBOARD PAGE COMPONENT ---------------- */
 const DashboardPage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
-  // Determine dark mode by checking the background color
   const isDarkMode = theme.background === "#121212";
 
-  // States for paginated records (table) and full records (charts)
   const [records, setRecords] = useState<Record[]>([]);
   const [allRecords, setAllRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>("");
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const limit = 10;
 
-  // Filtering and sorting state
   const [filterCategory, setFilterCategory] = useState<string>("");
   const [sortField, setSortField] = useState<string>("date");
   const [sortOrder, setSortOrder] = useState<number>(-1);
 
-  // Modal and editing state
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editRecord, setEditRecord] = useState<Record | null>(null);
@@ -211,7 +202,6 @@ const DashboardPage: React.FC = () => {
     type: "expense",
   });
 
-  // Debounced sort change handler using custom hook
   const debouncedSortChange = useDebounce((field: string) => {
     if (sortField === field) {
       setSortOrder((prev) => (prev === 1 ? -1 : 1));
@@ -221,11 +211,11 @@ const DashboardPage: React.FC = () => {
     }
     setCurrentPage(1);
   }, 300);
+
   const handleSortChange = (field: string) => {
     debouncedSortChange(field);
   };
 
-  // Fetch paginated records for the table
   const fetchPaginatedRecords = async () => {
     try {
       const skip = (currentPage - 1) * limit;
@@ -247,7 +237,6 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // Fetch all records for charts and CSV download
   const fetchAllRecords = async () => {
     try {
       const data = await recordService.getAll();
@@ -260,38 +249,100 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // On mount, fetch all records for charts
   useEffect(() => {
     fetchAllRecords();
   }, []);
 
-  // Refetch paginated records when filtering or sorting changes
   useEffect(() => {
     fetchPaginatedRecords();
   }, [currentPage, filterCategory, sortField, sortOrder]);
 
-  // Compute chart data using full record set
-  const chartRecords = allRecords;
+  // CRUD Handlers
+  const handleAddRecord = async (newRec: RecordCreate) => {
+    try {
+      await recordService.createRecord(newRec);
+      setShowAddModal(false);
+      await fetchPaginatedRecords();
+      await fetchAllRecords();
+    } catch (error) {
+      console.error("Error adding record:", error);
+      setErrorMsg("Failed to add record.");
+    }
+  };
+
+  const handleEdit = (rec: Record) => {
+    setEditRecord(rec);
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editRecord) return;
+    try {
+      await recordService.update(editRecord.id, {
+        amount: editRecord.amount,
+        category: editRecord.category,
+        description: editRecord.description,
+        type: editRecord.type,
+      } as RecordUpdate);
+      setShowEditModal(false);
+      await fetchPaginatedRecords();
+      await fetchAllRecords();
+    } catch (error) {
+      console.error("Error updating record:", error);
+      setErrorMsg("Failed to update record.");
+    }
+  };
+
+  const handleDelete = async (rec: Record) => {
+    if (window.confirm("Are you sure you want to delete this record?")) {
+      try {
+        await recordService.deleteRecord(rec.id);
+        await fetchPaginatedRecords();
+        await fetchAllRecords();
+      } catch (error) {
+        console.error("Error deleting record:", error);
+        setErrorMsg("Failed to delete record.");
+      }
+    }
+  };
+
+  const totalPages = Math.ceil(totalRecords / limit);
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  const pageStyleGlobal = {
+    backgroundColor: theme.background,
+    color: theme.text,
+    minHeight: "100vh",
+  };
+
+  const cardStyleGlobal = {
+    backgroundColor: theme.background,
+    color: theme.text,
+    border: `1px solid ${theme.cardBorder}`,
+  };
+
   const now = new Date();
   const thisMonthTotals = computeTotalsForMonth(
-    chartRecords,
+    allRecords,
     now.getMonth(),
     now.getFullYear()
   );
   const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
   const lastMonthTotals = computeTotalsForMonth(
-    chartRecords,
+    allRecords,
     lastMonthDate.getMonth(),
     lastMonthDate.getFullYear()
   );
   const { labels: lineLabels, data: lineValues } = computeBalanceOverTime(
-    chartRecords,
+    allRecords,
     30
   );
   const { labels: barLabels, data: barValues } =
-    computeLast7DaysExpenses(chartRecords);
+    computeLast7DaysExpenses(allRecords);
 
-  // Chart options using theme values
   const commonScales = {
     x: {
       ticks: { color: theme.text, font: { size: 12 } },
@@ -393,8 +444,7 @@ const DashboardPage: React.FC = () => {
     ],
   };
 
-  // Compute doughnut data for categories using the isDarkMode flag
-  const { expenseMap, incomeMap } = computeCategoryTotals(chartRecords);
+  const { expenseMap, incomeMap } = computeCategoryTotals(allRecords);
   const expenseCategoryData = mapToDoughnutData(expenseMap, isDarkMode);
   const incomeCategoryData = mapToDoughnutData(incomeMap, isDarkMode);
   const categoryDoughnutOptions = {
@@ -408,118 +458,12 @@ const DashboardPage: React.FC = () => {
     },
   };
 
-  // CSV Download: fetch all records for CSV download
-  const downloadCSV = async () => {
-    try {
-      const data = await recordService.getAll();
-      const allRecords = Array.isArray(data)
-        ? data
-        : (data as { records: Record[] }).records;
-      if (allRecords.length === 0) return;
-      const header = ["Date", "Type", "Amount", "Category", "Description"];
-      const rows = allRecords.map((record) => {
-        const dateStr = formatLocalDate(new Date(record.date));
-        const desc = record.description
-          ? `"${record.description.replace(/"/g, '""')}"`
-          : "";
-        return [
-          dateStr,
-          record.type,
-          record.amount.toString(),
-          record.category,
-          desc,
-        ].join(",");
-      });
-      const csvContent = [header.join(","), ...rows].join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "records.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error downloading CSV:", error);
-    }
-  };
-
-  // CRUD Handlers
-  const handleAddRecord = async (newRec: RecordCreate) => {
-    try {
-      await recordService.createRecord(newRec);
-      setShowAddModal(false);
-      await fetchPaginatedRecords();
-      await fetchAllRecords();
-    } catch (error) {
-      console.error("Error adding record:", error);
-      setErrorMsg("Failed to add record.");
-    }
-  };
-
-  const handleEdit = (rec: Record) => {
-    setEditRecord(rec);
-    setShowEditModal(true);
-  };
-
-  const handleUpdate = async () => {
-    if (!editRecord) return;
-    try {
-      await recordService.update(editRecord.id, {
-        amount: editRecord.amount,
-        category: editRecord.category,
-        description: editRecord.description,
-        type: editRecord.type,
-      } as RecordUpdate);
-      setShowEditModal(false);
-      await fetchPaginatedRecords();
-      await fetchAllRecords();
-    } catch (error) {
-      console.error("Error updating record:", error);
-      setErrorMsg("Failed to update record.");
-    }
-  };
-
-  const handleDelete = async (rec: Record) => {
-    if (window.confirm("Are you sure you want to delete this record?")) {
-      try {
-        await recordService.deleteRecord(rec.id);
-        await fetchPaginatedRecords();
-        await fetchAllRecords();
-      } catch (error) {
-        console.error("Error deleting record:", error);
-        setErrorMsg("Failed to delete record.");
-      }
-    }
-  };
-
-  // Pagination Controls
-  const totalPages = Math.ceil(totalRecords / limit);
-  const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-  };
-
-  // Global styling using theme values
-  const pageStyleGlobal = {
-    backgroundColor: theme.background,
-    color: theme.text,
-    minHeight: "100vh",
-  };
-
-  const cardStyleGlobal = {
-    backgroundColor: theme.background,
-    color: theme.text,
-    border: `1px solid ${theme.cardBorder}`,
-  };
-
   return (
     <>
       <MainNavbar />
       <div style={pageStyleGlobal}>
         <Container fluid className="mt-2 content-padding">
           {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
-          {/* Charts Section */}
           <Row className="mt-4">
             <Col xs={12} md={6}>
               <Card className="mb-3" style={cardStyleGlobal}>
@@ -537,7 +481,6 @@ const DashboardPage: React.FC = () => {
             </Col>
           </Row>
 
-          {/* Doughnut Charts Section */}
           <Row>
             <Col xs={6} md={3}>
               <Card className="mb-3" style={cardStyleGlobal}>
@@ -584,7 +527,7 @@ const DashboardPage: React.FC = () => {
               </Card>
             </Col>
           </Row>
-          {/* Unified Header Row: Title, Filter Input, and Action Buttons */}
+
           <Row className="mt-4 align-items-center">
             <Col xs={12} md={4} className="text-start">
               <h4 className="mb-0">Your Records</h4>
@@ -604,16 +547,12 @@ const DashboardPage: React.FC = () => {
               <Button variant="success" onClick={() => setShowAddModal(true)}>
                 Add Record
               </Button>
-              <Button
-                variant="secondary"
-                onClick={downloadCSV}
-                className="ms-2"
-              >
-                Download CSV
-              </Button>
+              <span className="ms-2">
+                <DownloadCSVButton records={allRecords} />
+              </span>
             </Col>
           </Row>
-          {/* Records Table */}
+
           <Row className="mt-4">
             <Col xs={12}>
               {loading ? (
@@ -631,7 +570,6 @@ const DashboardPage: React.FC = () => {
             </Col>
           </Row>
 
-          {/* Pagination Controls */}
           <Row className="mt-3 mb-3">
             <Col className="d-flex justify-content-center align-items-center">
               <Button
