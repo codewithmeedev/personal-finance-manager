@@ -9,7 +9,7 @@ app = FastAPI()
 # Specify the origins that should be allowed to make requests.
 # For local development, include your frontend URL.
 origins = [
-    "http://localhost:5173",
+    "http://localhost:3000",
     # Add other allowed origins if needed.
 ]
 
