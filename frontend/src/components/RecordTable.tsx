@@ -58,7 +58,7 @@ const RecordTable: React.FC<RecordTableProps> = ({
       <tbody>
         {records.map((rec) => (
           <tr key={rec.id}>
-            <td>{new Date(rec.date).toLocaleDateString()}</td>
+            <td>{new Date(rec.date).toLocaleDateString("en-GB").replace(/\//g, "-")}</td>
             <td>{rec.type}</td>
             <td>{rec.amount}</td>
             <td>{rec.category}</td>
