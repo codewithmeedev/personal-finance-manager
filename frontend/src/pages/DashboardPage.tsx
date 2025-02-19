@@ -31,6 +31,7 @@ import recordService from "../services/recordService";
 import { Record, RecordCreate, RecordUpdate } from "../types/record";
 import { ThemeContext } from "../context/ThemeContext";
 import { useDebounce } from "../hooks/useDebounce";
+import { CATEGORY_OPTIONS, categoryColorMap } from "../utils/categories";
 
 ChartJS.register(
   CategoryScale,
@@ -45,6 +46,7 @@ ChartJS.register(
   Filler
 );
 
+// Utility: Format a Date as "YYYY-MM-DD"
 const formatLocalDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = ("0" + (date.getMonth() + 1)).slice(-2);
@@ -74,35 +76,17 @@ function computeCategoryTotals(records: Record[]) {
 function mapToDoughnutData(categoryMap: Map<string, number>, isDark: boolean) {
   const labels = Array.from(categoryMap.keys());
   const values = Array.from(categoryMap.values());
-  const lightColors = [
-    "#4caf50",
-    "#f44336",
-    "#ff9800",
-    "#2196f3",
-    "#9c27b0",
-    "#ffeb3b",
-    "#795548",
-    "#00bcd4",
-  ];
-  const darkColors = [
-    "#66bb6a",
-    "#ef5350",
-    "#ffb74d",
-    "#64b5f6",
-    "#ba68c8",
-    "#fff176",
-    "#a1887f",
-    "#4dd0e1",
-  ];
+  // Use a different fallback color based on dark mode
+  const fallbackColor = isDark ? "#666666" : "#aaaaaa";
+  const backgroundColor = labels.map(
+    (cat) => categoryColorMap[cat] || fallbackColor
+  );
   return {
     labels,
     datasets: [
       {
         data: values,
-        backgroundColor: (isDark ? darkColors : lightColors).slice(
-          0,
-          labels.length
-        ),
+        backgroundColor,
       },
     ],
   };
@@ -144,8 +128,7 @@ const computeLast7DaysExpenses = (
   const dailyExpenseMap = new Map<string, number>();
   records.forEach((record) => {
     if (record.type === "expense") {
-      const recordDate = new Date(record.date);
-      const recordDay = formatLocalDate(recordDate);
+      const recordDay = formatLocalDate(new Date(record.date));
       if (resultDays.includes(recordDay)) {
         dailyExpenseMap.set(
           recordDay,
@@ -443,10 +426,25 @@ const DashboardPage: React.FC = () => {
       },
     ],
   };
+    // Filter records to only include those from the current month
+  
+  const currentMonthRecords = allRecords.filter((rec) => {
+    const recDate = new Date(rec.date);
+    return (
+      recDate.getMonth() === now.getMonth() &&
+      recDate.getFullYear() === now.getFullYear()
+    );
+  });
 
-  const { expenseMap, incomeMap } = computeCategoryTotals(allRecords);
+  // Compute category totals using only the current month's records
+  const { expenseMap, incomeMap } = computeCategoryTotals(currentMonthRecords);
   const expenseCategoryData = mapToDoughnutData(expenseMap, isDarkMode);
   const incomeCategoryData = mapToDoughnutData(incomeMap, isDarkMode);
+
+
+  // const { expenseMap, incomeMap } = computeCategoryTotals(allRecords);
+  // const expenseCategoryData = mapToDoughnutData(expenseMap, isDarkMode);
+  // const incomeCategoryData = mapToDoughnutData(incomeMap, isDarkMode);
   const categoryDoughnutOptions = {
     responsive: true,
     plugins: {
@@ -533,15 +531,20 @@ const DashboardPage: React.FC = () => {
               <h4 className="mb-0">Your Records</h4>
             </Col>
             <Col xs={12} md={4} className="text-center">
-              <Form.Control
-                type="text"
-                placeholder="Filter by category"
+                <Form.Select
                 value={filterCategory}
                 onChange={(e) => {
                   setFilterCategory(e.target.value);
                   setCurrentPage(1);
                 }}
-              />
+              >
+                <option value="">All Categories</option>
+                {CATEGORY_OPTIONS.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </Form.Select>
             </Col>
             <Col xs={12} md={4} className="text-end">
               <Button variant="success" onClick={() => setShowAddModal(true)}>
@@ -624,14 +627,19 @@ const DashboardPage: React.FC = () => {
                 />
               </Form.Group>
               <Form.Group controlId="editCategory" className="mb-3">
-                <Form.Label>Category</Form.Label>
-                <Form.Control
-                  type="text"
+              <Form.Label>Category</Form.Label>
+                <Form.Select
                   value={editRecord.category}
                   onChange={(e) =>
                     setEditRecord({ ...editRecord, category: e.target.value })
                   }
-                />
+                >
+                  {CATEGORY_OPTIONS.map((cat) => (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </Form.Select>
               </Form.Group>
               <Form.Group controlId="editDescription" className="mb-3">
                 <Form.Label>Description</Form.Label>
@@ -710,8 +718,7 @@ const DashboardPage: React.FC = () => {
             </Form.Group>
             <Form.Group controlId="addCategory" className="mb-3">
               <Form.Label>Category</Form.Label>
-              <Form.Control
-                type="text"
+              <Form.Select
                 value={newRecordData.category}
                 onChange={(e) =>
                   setNewRecordData({
@@ -720,7 +727,14 @@ const DashboardPage: React.FC = () => {
                   })
                 }
                 required
-              />
+              >
+                <option value="">Select a category</option>
+                {CATEGORY_OPTIONS.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </Form.Select>
             </Form.Group>
             <Form.Group controlId="addDescription" className="mb-3">
               <Form.Label>Description</Form.Label>

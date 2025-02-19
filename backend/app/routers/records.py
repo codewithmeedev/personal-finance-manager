@@ -93,7 +93,6 @@ async def update_record(record_id: str, updated_record: RecordUpdate, current_us
 
     update_data = updated_record.model_dump(exclude_unset=True)
     if update_data:
-        update_data["date"] = datetime.now(timezone.utc)
         try:
             await records_collection.update_one(
                 {"_id": ObjectId(record_id)},
