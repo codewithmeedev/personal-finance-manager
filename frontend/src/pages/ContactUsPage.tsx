@@ -3,6 +3,7 @@ import React, { useState, useContext } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import axios from 'axios';
 import { ThemeContext } from '../context/ThemeContext';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const ContactUsPage: React.FC = () => {
   const { theme } = useContext(ThemeContext);
@@ -16,7 +17,7 @@ const ContactUsPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post<{ msg: string }>('http://localhost:8000/contact', {
+      const response = await axios.post<{ msg: string }>(`${API_URL}/contact`, {
         name,
         email,
         message,

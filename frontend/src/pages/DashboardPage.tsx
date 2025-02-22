@@ -426,8 +426,8 @@ const DashboardPage: React.FC = () => {
       },
     ],
   };
-    // Filter records to only include those from the current month
-  
+  // Filter records to only include those from the current month
+
   const currentMonthRecords = allRecords.filter((rec) => {
     const recDate = new Date(rec.date);
     return (
@@ -440,7 +440,6 @@ const DashboardPage: React.FC = () => {
   const { expenseMap, incomeMap } = computeCategoryTotals(currentMonthRecords);
   const expenseCategoryData = mapToDoughnutData(expenseMap, isDarkMode);
   const incomeCategoryData = mapToDoughnutData(incomeMap, isDarkMode);
-
 
   // const { expenseMap, incomeMap } = computeCategoryTotals(allRecords);
   // const expenseCategoryData = mapToDoughnutData(expenseMap, isDarkMode);
@@ -531,7 +530,7 @@ const DashboardPage: React.FC = () => {
               <h4 className="mb-0">Your Records</h4>
             </Col>
             <Col xs={12} md={4} className="text-center">
-                <Form.Select
+              <Form.Select
                 value={filterCategory}
                 onChange={(e) => {
                   setFilterCategory(e.target.value);
@@ -617,6 +616,8 @@ const DashboardPage: React.FC = () => {
                 <Form.Label>Amount</Form.Label>
                 <Form.Control
                   type="number"
+                  min={0}
+                  defaultValue={0}
                   value={editRecord.amount}
                   onChange={(e) =>
                     setEditRecord({
@@ -624,10 +625,11 @@ const DashboardPage: React.FC = () => {
                       amount: parseFloat(e.target.value),
                     })
                   }
+                  required
                 />
               </Form.Group>
               <Form.Group controlId="editCategory" className="mb-3">
-              <Form.Label>Category</Form.Label>
+                <Form.Label>Category</Form.Label>
                 <Form.Select
                   value={editRecord.category}
                   onChange={(e) =>
@@ -706,6 +708,8 @@ const DashboardPage: React.FC = () => {
               <Form.Label>Amount</Form.Label>
               <Form.Control
                 type="number"
+                min={0}
+                defaultValue={0}
                 value={newRecordData.amount}
                 onChange={(e) =>
                   setNewRecordData({

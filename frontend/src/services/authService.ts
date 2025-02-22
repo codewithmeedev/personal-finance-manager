@@ -2,7 +2,7 @@ import axios from 'axios';
 import { TokenPair } from '../types/auth';
 import { ResetPasswordResponse } from '../types/auth';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 async function signup(username: string, email: string, password: string): Promise<void> {
   const response = await axios.post<TokenPair>(`${BASE_URL}/users/signup`, { username, email, password });

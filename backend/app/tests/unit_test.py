@@ -8,18 +8,15 @@ from datetime import timedelta
 import os
 from dotenv import load_dotenv
 import time
+from app.conftest import created_test_emails  # global list for cleanup
 
 # Load environment variables
 load_dotenv()
 
-# Configure synchronous TestClient for utility tests
 client = TestClient(app)
 
-# Constants
 SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
-
-# Synchronous tests for utility functions
 
 
 def test_hash_password():
@@ -38,13 +35,9 @@ def test_create_token():
     payload = decode_access_token(access_token)
     assert payload["sub"] == "testuser"
 
-# Utility function to generate a unique email based on timestamp
-
 
 def unique_email(base="testuser"):
     return f"{base}_{int(time.time() * 1000)}@example.com"
-
-# Asynchronous tests for endpoints using pytest-asyncio and the async_client fixture
 
 
 @pytest.mark.asyncio
@@ -57,6 +50,7 @@ async def test_user_registration(async_client):
     }
     response = await async_client.post("/users/signup", json=payload)
     assert response.status_code == 201, response.text
+    created_test_emails.append(email)
     json_resp = response.json()
     assert "access_token" in json_resp
     assert "refresh_token" in json_resp
@@ -64,15 +58,15 @@ async def test_user_registration(async_client):
 
 @pytest.mark.asyncio
 async def test_user_signin(async_client):
-    # Ensure the user exists by registering with a unique email
     email = unique_email()
     registration_payload = {
         "username": "testuser",
         "email": email,
         "password": "testpassword"
     }
-    await async_client.post("/users/signup", json=registration_payload)
-
+    signup_response = await async_client.post("/users/signup", json=registration_payload)
+    assert signup_response.status_code == 201, signup_response.text
+    created_test_emails.append(email)
     signin_payload = {
         "email": email,
         "password": "testpassword"
@@ -86,13 +80,14 @@ async def test_user_signin(async_client):
 
 @pytest.mark.asyncio
 async def test_create_record(async_client):
-    # Register and sign in to get a fresh access token
     email = unique_email()
-    await async_client.post("/users/signup", json={
+    signup_resp = await async_client.post("/users/signup", json={
         "username": "testuser",
         "email": email,
         "password": "testpassword"
     })
+    assert signup_resp.status_code == 201, signup_resp.text
+    created_test_emails.append(email)
     signin_response = await async_client.post("/users/signin", json={
         "email": email,
         "password": "testpassword"
@@ -102,7 +97,8 @@ async def test_create_record(async_client):
     record_payload = {
         "amount": 100.0,
         "category": "Groceries",
-        "description": "Weekly groceries"
+        "description": "Weekly groceries",
+        "type": "expense"
     }
     response = await async_client.post(
         "/records/",
@@ -110,17 +106,20 @@ async def test_create_record(async_client):
         headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 201, response.text
+    # Check that the created record has the expected amount
     assert response.json()["amount"] == 100.0
 
 
 @pytest.mark.asyncio
 async def test_get_records(async_client):
     email = unique_email()
-    await async_client.post("/users/signup", json={
+    signup_resp = await async_client.post("/users/signup", json={
         "username": "testuser",
         "email": email,
         "password": "testpassword"
     })
+    assert signup_resp.status_code == 201, signup_resp.text
+    created_test_emails.append(email)
     signin_response = await async_client.post("/users/signin", json={
         "email": email,
         "password": "testpassword"
@@ -132,17 +131,22 @@ async def test_get_records(async_client):
         headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200, response.text
-    assert isinstance(response.json(), list)
+    data = response.json()
+    # Expecting a JSON object with "records" and "total"
+    assert "records" in data and "total" in data
+    assert isinstance(data["records"], list)
 
 
 @pytest.mark.asyncio
 async def test_update_record(async_client):
     email = unique_email()
-    await async_client.post("/users/signup", json={
+    signup_resp = await async_client.post("/users/signup", json={
         "username": "testuser",
         "email": email,
         "password": "testpassword"
     })
+    assert signup_resp.status_code == 201, signup_resp.text
+    created_test_emails.append(email)
     signin_response = await async_client.post("/users/signin", json={
         "email": email,
         "password": "testpassword"
@@ -152,7 +156,8 @@ async def test_update_record(async_client):
     record_payload = {
         "amount": 100.0,
         "category": "Groceries",
-        "description": "Weekly groceries"
+        "description": "Weekly groceries",
+        "type": "expense"
     }
     create_response = await async_client.post(
         "/records/",
@@ -161,7 +166,7 @@ async def test_update_record(async_client):
     )
     record_id = create_response.json()["id"]
 
-    update_payload = {"amount": 150.0}
+    update_payload = {"amount": 150.0}  # updating only the amount
     update_response = await async_client.patch(
         f"/records/{record_id}",
         json=update_payload,
@@ -174,11 +179,13 @@ async def test_update_record(async_client):
 @pytest.mark.asyncio
 async def test_delete_record(async_client):
     email = unique_email()
-    await async_client.post("/users/signup", json={
+    signup_resp = await async_client.post("/users/signup", json={
         "username": "testuser",
         "email": email,
         "password": "testpassword"
     })
+    assert signup_resp.status_code == 201, signup_resp.text
+    created_test_emails.append(email)
     signin_response = await async_client.post("/users/signin", json={
         "email": email,
         "password": "testpassword"
@@ -188,7 +195,8 @@ async def test_delete_record(async_client):
     record_payload = {
         "amount": 100.0,
         "category": "Groceries",
-        "description": "Weekly groceries"
+        "description": "Weekly groceries",
+        "type": "expense"
     }
     create_response = await async_client.post(
         "/records/",

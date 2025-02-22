@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button, Form } from "react-bootstrap";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 interface ChatMessage {
   sender: "user" | "assistant";
@@ -34,7 +35,7 @@ const ChatAssistant: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/personal_assistant/",
+        `${API_URL}/personal_assistant/`,
         { question: input },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );

@@ -81,7 +81,7 @@ class RecordRead(BaseModel):
 
 
 class RecordUpdate(BaseModel):
-    amount: Optional[float] = Field(None, gt=0)
+    amount: float = Field(..., gt=0)
     category: Optional[str] = Field(None, min_length=3, max_length=50)
     description: Optional[str] = Field(None, max_length=255)
     type: Optional[RecordType] = Field(None)

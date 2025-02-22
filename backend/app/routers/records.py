@@ -108,24 +108,17 @@ async def update_record(record_id: str, updated_record: RecordUpdate, current_us
 
 @router.delete("/{record_id}", status_code=200)
 async def delete_record(record_id: str, current_user: dict = Depends(get_current_user)):
-    """
-    Delete a record for the authenticated user.
-    """
     user_id = str(current_user["_id"])
 
     if not ObjectId.is_valid(record_id):
-        raise HTTPException(
-            status_code=400, detail="Invalid record ID format.")
+        raise HTTPException(status_code=400, detail="Invalid record ID format.")
 
-    try:
-        result = await records_collection.delete_one(
-            {"_id": ObjectId(record_id), "user_id": user_id}
-        )
-        if result.deleted_count == 0:
-            raise HTTPException(
-                status_code=404, detail="Record not found."
-            )
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error.")
-
+    # Attempt to delete the record without a try/except that swallows HTTPExceptions.
+    result = await records_collection.delete_one(
+        {"_id": ObjectId(record_id), "user_id": user_id}
+    )
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Record not found.")
+    
     return {"message": "Record deleted successfully."}
+
