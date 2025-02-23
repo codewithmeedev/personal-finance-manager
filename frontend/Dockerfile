@@ -1,22 +1,23 @@
-# Stage 1: Build the app using Node 20 on Debian
-FROM node:20-bullseye-slim AS builder
+# Use the official lightweight Node.js image
+FROM node:20-bullseye-slim
+
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy package files first so that Docker can cache the npm install step.
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies using a clean install.
-RUN npm ci
+# Install dependencies (use --legacy-peer-deps for potential Chart.js issues)
+RUN npm install --legacy-peer-deps
 
-# Copy the rest of the source code.
+# Copy the rest of the application
 COPY . .
 
-# Build the production version of your app.
+# Build the application
 RUN npm run build
 
-# Stage 2: Serve the built app using Nginx
-FROM nginx:alpine
-RUN rm -rf /usr/share/nginx/html/*
-COPY --from=builder /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Expose port 3000
+EXPOSE 3000
+
+# Serve the React application
+CMD ["npx", "serve", "-s", "build", "-l", "3000"]

@@ -116,17 +116,6 @@ const UserInfoPage: React.FC = () => {
                 required
               />
             </Form.Group>
-            <Form.Group controlId="editPassword" className="mb-3">
-              <Form.Label>Password (leave blank to keep current)</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Enter new password"
-                value={formData.password || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-              />
-            </Form.Group>
             <Button variant="primary" type="submit" className="me-2">
               Save
             </Button>
