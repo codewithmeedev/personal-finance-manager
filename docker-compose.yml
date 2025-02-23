@@ -19,16 +19,6 @@ services:
     networks:
       - app-network
 
-  frontend_test:
-    image: node:20-bullseye
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: sh -c "npm ci && npm test"
-    networks:
-      - app-network
-
 networks:
   app-network:
     driver: bridge
