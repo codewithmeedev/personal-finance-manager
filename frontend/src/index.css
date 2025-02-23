@@ -168,3 +168,9 @@ body, html {
   margin: 0;
   /* or margin-bottom: 0.25rem; etc. */
 }
+/* Override dark mode for assistant messages */
+body.dark-mode .chat-message.assistant {
+  color: black !important;
+  background-color: #fff !important;
+  border-color: #ccc !important;
+}
