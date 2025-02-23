@@ -1,192 +1,164 @@
-# Personal Finance Backend
+# Personal Finance API
 
-A FastAPI-based personal finance backend with integrated language model capabilities. This project uses Docker for containerization, making it easy to build, run, and test in a consistent environment.
+*A comprehensive personal finance management solution powered by AI, MongoDB, and microservices architecture.*
+
+**Technologies:** FastAPI • React • MongoDB • Docker • Docker Compose • Uvicorn • Hugging Face Phi 3 Mini • Sendinblue
+
+---
 
 ## Table of Contents
 
+- [Overview](#overview)
+- [Architecture](#architecture)
 - [Features](#features)
-- [Project Structure](#project-structure)
-- [File Explanations](#file-explanations)
-- [Prerequisites](#prerequisites)
-- [Environment Variables](#environment-variables)
-- [Building the Docker Image](#building-the-docker-image)
-- [Running the Application](#running-the-application)
+- [Setting Up the Project](#setting-up-the-project)
+- [Docker Deployment with Docker Compose](#docker-deployment-with-docker-compose)
+  - [Running the Application Locally](#running-the-application-locally)
+- [API Documentation](#api-documentation)
 - [Running Tests](#running-tests)
-- [Usage Example](#usage-example)
-- [Troubleshooting](#troubleshooting)
-- [Additional Notes](#additional-notes)
+- [License](#license)
+
+---
+
+## Overview
+
+Personal Finance API is a full-stack application that enables users to manage their finances securely and efficiently. The robust FastAPI backend provides financial tracking, user authentication, and personalized AI-driven insights, while MongoDB stores user and financial data. The modern React frontend delivers a responsive and intuitive user experience. Additionally, Sendinblue is integrated for email communications on the Contact Us page, and Hugging Face Phi 3 Mini powers a personal assistant for tailored financial advice. The entire solution is containerized using Docker and orchestrated with Docker Compose, ensuring consistent deployments and simplified testing.
+
+---
+
+## Architecture
+
+Below is the system architecture diagram illustrating how the various components interact:
+
+![Architecture Diagram](architecture-diagram.png)
+
+Key components include:
+
+- **Frontend (React + TypeScript):** An interactive interface for managing records and user accounts.
+- **Backend (FastAPI):** A RESTful API handling authentication, financial tracking, and AI-driven insights.
+- **MongoDB:** Stores user and financial data in a flexible document-based schema.
+- **Sendinblue:** Manages email sending for contact forms and notifications.
+- **Hugging Face Phi 3 Mini:** Powers the personal assistant functionality, delivering tailored financial recommendations.
+- **SLR Service (FastAPI):** A separate microservice (if applicable) for specialized tasks.
+
+---
 
 ## Features
 
-- **User Authentication and Management:** Register, sign in, and manage user accounts.
-- **CRUD Operations for Financial Records:** Create, read, update, and delete financial transactions.
-- **Personalized Financial Advice:** Leverage Hugging Face's Phi model to provide tailored financial recommendations.
-- **Dockerized Environment:** Simplifies setup, deployment, and testing.
+- **Financial Tracking:**  
+  Monitor your balances, incomes, and expenses with precision.
 
-## Project Structure
+- **Personalized Insights:**  
+  Receive actionable, AI-driven financial advice tailored to your financial data.
 
-```
-personal-finance-api/
-├── app/
-│   ├── __init__.py
-│   ├── auth.py
-│   ├── database.py
-│   ├── main.py
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── personal_assistant.py
-│   │   ├── records.py
-│   │   └── users.py
-│   ├── schemas.py
-│   ├── serializers.py
-│   ├── unit_tests.py
-│   └── utils.py
-├── conftest.py
-├── integration_test.py
-├── requirements.txt
-├── Dockerfile
-├── .env
-└── README.md
-```
+- **User Authentication:**  
+  Secure registration, login, and account management protect user data.
 
-## File Explanations
+- **MongoDB Integration:**  
+  Efficiently store and manage user and financial records using MongoDB.
 
-- **app/auth.py**: Contains functions for user authentication, token management, and dependencies like `get_current_user`.
-- **app/database.py**: Manages connection to MongoDB using Motor, sets up access to collections.
-- **app/main.py**: The main entry point. It creates the FastAPI instance, sets up routes, and configures middlewares.
-- **app/routers/**: Contains API route definitions, split by functionality:
-  - **personal_assistant.py**: Endpoints related to personal assistant features using the language model.
-  - **records.py**: Endpoints for creating, reading, updating, and deleting financial records.
-  - **users.py**: Endpoints for user-related operations like registration and login.
-- **app/schemas.py**: Defines Pydantic models used for data validation in requests and responses.
-- **app/serializers.py**: Provides functions to transform raw database documents into formatted response objects.
-- **app/unit_tests.py**: Contains unit tests for individual functions and components.
-- **app/utils.py**: General utility functions for tasks like hashing passwords and creating tokens.
-- **conftest.py**: Pytest configuration file; defines fixtures that can be shared across multiple test files.
-- **integration_test.py**: Contains integration tests that verify interactions between different parts of the application.
-- **requirements.txt**: Lists all Python packages required by the project.
-- **Dockerfile**: Contains instructions to build a Docker image for the application, including installing dependencies and running the server.
-- **README.md**: This documentation file describing how to set up, run, and use the project.
+- **Email Services with Sendinblue:**  
+  Handle contact requests and email notifications seamlessly.
 
-## Prerequisites
+- **AI-Powered Personal Assistant:**  
+  Leverage Hugging Face Phi 3 Mini to provide personalized financial recommendations.
 
-- [Docker](https://www.docker.com/get-started) installed on your machine.
-- A MongoDB Atlas account or a running MongoDB instance.
-- Hugging Face API key for accessing the Phi model.
+- **Containerized Deployment:**  
+  Docker and Docker Compose guarantee consistent environments and simplify deployment.
 
-## Environment Variables
+- **Integrated Testing:**  
+  Run backend tests (e.g., using pytest) and frontend tests (e.g., using Jest) in isolated container environments.
 
-Environment variables are used to manage sensitive information securely. Follow these steps to set them up:
+---
 
-1. **Create a `.env` File:**
+## Setting Up the Project
 
-   - In the project root, create a file named `.env`.
-   - Add variables with your actual values:
-   - `.env.example` is provided as a template for required environment variables without sensitive data.
+### 1. Clone the Repository
 
-## Building the Docker Image
-
-Follow these steps to build the Docker image for your application:
-
-1. **Clone the Repository:**
-
-   ```bash
-   git clone <repository_url>.git
-   cd personal-finance-api
-
-   ```
-
-2. **Set up Environment Variables:**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   - Edit `.env` and replace placeholder values with your actual credentials.
-
-3. **Build the Docker Image:**
-   ```bash
-   docker build -t personal-finance-api .
-   ```
-   - This builds an image named `personal-finance-api` using the Dockerfile.
-
-## Running the Application
-
-Run the application container with:
+Clone the repository and navigate to the project folder:
 
 ```bash
-docker run -p 8000:8000 --env-file .env personal-finance-api
+git clone https://github.com/Roee104/personal-finance-api.git
+cd personal-finance-api
 ```
 
-- Maps port 8000 of the container to port 8000 on your host.
-- Loads environment variables from `.env`.
-- Access the app at [http://localhost:8000](http://localhost:8000).
+### 2. Configure Environment Variables
+
+Copy the provided `.env.example` file to create your own `.env` file at the project root. Then update the values as needed:
+
+```bash
+cp .env.example .env
+```
+
+*Ensure your `.env` file is excluded from version control to keep sensitive information secure.*
+
+---
+
+## Docker Deployment with Docker Compose
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Running the Application Locally
+
+For development and testing, use Docker Compose to build and start the containers:
+
+```bash
+docker-compose up --build
+```
+
+This command will:
+- Build the backend and frontend Docker images.
+- Start the backend API (accessible at [http://localhost:8000](http://localhost:8000)).
+- Start the frontend application (accessible at [http://localhost:3000](http://localhost:3000)).
+
+To stop the services, run:
+
+```bash
+docker-compose down
+```
+
+---
+
+## API Documentation
+
+Once the backend is running, interactive API documentation is automatically generated via FastAPI. Access it at:
+
+- **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+These endpoints detail each API route, including request and response formats.
+
+---
 
 ## Running Tests
 
-To execute tests inside a Docker container:
+### Backend Tests
+
+Execute your backend tests (e.g., using pytest) within the Docker environment:
 
 ```bash
-docker run --env-file .env personal-finance-api pytest .
+docker-compose run --rm backend pytest
 ```
 
-- Runs `pytest` within the container using environment variables from `.env`.
-- Displays test results in your terminal.
+### Frontend Tests
 
-## Usage Example
-
-### Personal Assistant Endpoint
-
-- **Endpoint:** `POST /personal_assistant`
-- **Headers:**
-  - `Content-Type: application/json`
-  - `Authorization: Bearer <your_jwt_token>`
-- **Body:**
-  ```json
-  {
-    "question": "How can I save more on groceries?"
-  }
-  ```
-
-**Example using `curl`:**
+Run your containerized frontend tests (e.g., using Jest and React Testing Library) with:
 
 ```bash
-curl -X POST "http://localhost:8000/personal_assistant" \
-     -H "Content-Type: application/json" \
-     -H "Authorization: Bearer <your_jwt_token>" \
-     -d '{"question": "How can I save more on groceries?"}'
+docker-compose run --rm frontend_test
 ```
 
-**Expected Response:**
+These commands ensure that tests run in an environment identical to your production setup.
 
-```json
-{
-  "response": "Based on your recent spending, consider budgeting and looking for discounts..."
-}
-```
+---
 
-_Note: Response will vary based on model output and user data._
+## License
 
-## Troubleshooting
+This project is licensed under the [MIT License](LICENSE).
 
-- **Docker Build Errors:**
-  - Verify `requirements.txt` and Dockerfile syntax.
-- **Application Fails to Start:**
-  - Confirm correct environment variable values in `.env`.
-  - Check logs:
-    ```bash
-    docker logs <container_id>
-    ```
-- **Database Connection Issues:**
-  - Validate `MONGO_URI`.
-  - Ensure IP whitelist settings in MongoDB Atlas if needed.
-- **Hugging Face API Errors:**
-  - Check that `HF_API_TOKEN` is valid and within usage limits.
-  - Verify network connectivity to Hugging Face's API.
+---
 
-## Additional Notes
-
-- The `.env` file is not committed to version control. Use `.env.example` as a guide.
-- The Docker container uses `--env-file` to load environment variables securely.
-- Adjust model parameters and configuration in your code as necessary.
-
+*Happy managing your finances with Personal Finance API!*
