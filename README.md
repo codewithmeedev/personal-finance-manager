@@ -1,6 +1,6 @@
 # Personal Finance API
 
-*A comprehensive personal finance management solution powered by AI, MongoDB, and microservices architecture.*
+_A comprehensive personal finance management solution powered by AI, MongoDB, and microservices architecture._
 
 **Technologies:** FastAPI • React • MongoDB • Docker • Docker Compose • Uvicorn • Hugging Face Phi 3 Mini • Sendinblue
 
@@ -9,6 +9,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Demo](#demo)
 - [Architecture](#architecture)
 - [Features](#features)
 - [Setting Up the Project](#setting-up-the-project)
@@ -25,6 +26,10 @@
 Personal Finance API is a full-stack application that enables users to manage their finances securely and efficiently. The robust FastAPI backend provides financial tracking, user authentication, and personalized AI-driven insights, while MongoDB stores user and financial data. The modern React frontend delivers a responsive and intuitive user experience. Additionally, Sendinblue is integrated for email communications on the Contact Us page, and Hugging Face Phi 3 Mini powers a personal assistant for tailored financial advice. The entire solution is containerized using Docker and orchestrated with Docker Compose, ensuring consistent deployments and simplified testing.
 
 ---
+
+## Demo
+
+[![Demo Video](https://img.youtube.com/vi/UzkZXn1yWEg/0.jpg)](https://youtu.be/UzkZXn1yWEg)
 
 ## Architecture
 
@@ -90,7 +95,7 @@ Copy the provided `.env.example` file to create your own `.env` file at the proj
 cp .env.example .env
 ```
 
-*Ensure your `.env` file is excluded from version control to keep sensitive information secure.*
+_Ensure your `.env` file is excluded from version control to keep sensitive information secure._
 
 ---
 
@@ -110,6 +115,7 @@ docker-compose up --build
 ```
 
 This command will:
+
 - Build the backend and frontend Docker images.
 - Start the backend API (accessible at [http://localhost:8000](http://localhost:8000)).
 - Start the frontend application (accessible at [http://localhost:3000](http://localhost:3000)).
@@ -148,7 +154,7 @@ docker-compose run --rm backend pytest
 Run your containerized frontend tests (e.g., using Jest and React Testing Library) with:
 
 ```bash
-docker-compose run --rm frontend_test
+docker-compose run --rm frontend npm test
 ```
 
 These commands ensure that tests run in an environment identical to your production setup.
@@ -161,4 +167,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-*Happy managing your finances with Personal Finance API!*
+_Happy managing your finances with Personal Finance API!_
