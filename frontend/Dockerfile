@@ -22,4 +22,4 @@ EXPOSE 3000
 RUN npm install -g serve
 
 # Serve the React application
-CMD ["npx", "serve", "-s", "build", "-l", "3000"]
+CMD ["serve", "-s", "build", "-l", "3000"]
