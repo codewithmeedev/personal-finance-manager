@@ -23,7 +23,7 @@ services:
     image: node:20-bullseye
     working_dir: /app
     volumes:
-      - ./frontend:/app:ro
+      - ./frontend:/app
       - /app/node_modules
     command: sh -c "npm ci && npm test"
     networks:
