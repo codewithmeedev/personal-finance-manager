@@ -258,7 +258,7 @@ async def forgot_password(
     print(f"Generated reset token: {reset_token}")  # Debug print
 
     # Construct the reset link (make sure this is your actual frontend URL)
-    reset_link = f"http://localhost:3000/users/reset-password?token={reset_token}"
+    reset_link = f"http://localhost:3000/reset-password?token={reset_token}"
     print(f"Reset link: {reset_link}")  # Debug print
 
     # Schedule sending the email in a background task
