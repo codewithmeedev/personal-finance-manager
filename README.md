@@ -78,8 +78,8 @@ Key components include:
 Clone the repository and navigate to the project folder:
 
 ```bash
-git clone https://github.com/Roee104/personal-finance-api.git
-cd personal-finance-api
+git clone https://github.com/EASS-HIT-PART-A-2024-CLASS-VI/personal-finance-manager.git
+cd personal-finance-manager
 ```
 
 ### 2. Configure Environment Variables
