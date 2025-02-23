@@ -143,7 +143,7 @@ These endpoints detail each API route, including request and response formats.
 
 ### Backend Tests
 
-Execute your backend tests (e.g., using pytest) within the Docker environment:
+Execute backend tests :
 
 ```bash
 docker-compose run --rm backend pytest
@@ -151,7 +151,7 @@ docker-compose run --rm backend pytest
 
 ### Frontend Tests
 
-Run your containerized frontend tests (e.g., using Jest and React Testing Library) with:
+Run frontend tests :
 
 ```bash
 docker-compose run --rm frontend npm test
