@@ -1,4 +1,4 @@
-# Personal Finance API
+# Personal Finance Manager
 
 _A comprehensive personal finance management solution powered by AI, MongoDB, and microservices architecture._
 
@@ -23,7 +23,7 @@ _A comprehensive personal finance management solution powered by AI, MongoDB, an
 
 ## Overview
 
-Personal Finance API is a full-stack application that enables users to manage their finances securely and efficiently. The robust FastAPI backend provides financial tracking, user authentication, and personalized AI-driven insights, while MongoDB stores user and financial data. The modern React frontend delivers a responsive and intuitive user experience. Additionally, Sendinblue is integrated for email communications on the Contact Us page, and Hugging Face Phi 3 Mini powers a personal assistant for tailored financial advice. The entire solution is containerized using Docker and orchestrated with Docker Compose, ensuring consistent deployments and simplified testing.
+Personal Finance Manager is a full-stack application that enables users to manage their finances securely and efficiently. The robust FastAPI backend provides financial tracking, user authentication, and personalized AI-driven insights, while MongoDB stores user and financial data. The modern React frontend delivers a responsive and intuitive user experience. Additionally, Sendinblue is integrated for email communications on the Contact Us page and password recovery, and Hugging Face Phi 3 Mini powers a personal assistant for tailored financial advice. The entire solution is containerized using Docker and orchestrated with Docker Compose, ensuring consistent deployments and simplified testing.
 
 ---
 
@@ -42,7 +42,7 @@ Key components include:
 - **Frontend (React + TypeScript):** An interactive interface for managing records and user accounts.
 - **Backend (FastAPI):** A RESTful API handling authentication, financial tracking, and AI-driven insights.
 - **MongoDB:** Stores user and financial data in a flexible document-based schema.
-- **Sendinblue:** Manages email sending for contact forms and notifications.
+- **Sendinblue:** Manages email sending for contact forms and password recovery.
 - **Hugging Face Phi 3 Mini:** Powers the personal assistant functionality, delivering tailored financial recommendations.
 - **SLR Service (FastAPI):** A separate microservice (if applicable) for specialized tasks.
 
@@ -63,7 +63,7 @@ Key components include:
   Efficiently store and manage user and financial records using MongoDB.
 
 - **Email Services with Sendinblue:**  
-  Handle contact requests and email notifications seamlessly.
+  Handle contact requests and password recovery seamlessly.
 
 - **AI-Powered Personal Assistant:**  
   Leverage Hugging Face Phi 3 Mini to provide personalized financial recommendations.
@@ -72,7 +72,7 @@ Key components include:
   Docker and Docker Compose guarantee consistent environments and simplify deployment.
 
 - **Integrated Testing:**  
-  Run backend tests (e.g., using pytest) and frontend tests (e.g., using Jest) in isolated container environments.
+  Run backend tests and frontend tests in isolated container environments.
 
 ---
 
