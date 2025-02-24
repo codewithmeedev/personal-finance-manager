@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Container, Form, Button, Alert } from "react-bootstrap";
 import MainNavbar from "../components/MainNavbar";
 import userService from "../services/userService";
 import { User } from "../types/user";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const UserInfoPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -15,6 +16,7 @@ const UserInfoPage: React.FC = () => {
   }>({ username: "", email: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const { setIsAuthenticated } = useContext(AuthContext);
 
   useEffect(() => {
     async function fetchUser() {
@@ -52,9 +54,10 @@ const UserInfoPage: React.FC = () => {
       try {
         await userService.deleteUser(user.id);
         setMessage("Account deleted successfully.");
-        // Optionally, clear tokens and redirect to home
+        // Clear tokens, update auth state, and redirect to homepage
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        setIsAuthenticated(false);
         navigate("/");
       } catch (error: any) {
         console.error("Error deleting account:", error);
@@ -125,7 +128,6 @@ const UserInfoPage: React.FC = () => {
           </Form>
         )}
       </Container>
-    
     </>
   );
 };
