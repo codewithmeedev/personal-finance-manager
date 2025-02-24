@@ -128,6 +128,7 @@ body, html {
   padding: 6px 10px;
   border-radius: 4px;
   max-width: 95%;
+  color: #000;
 }
 .chat-message.user {
   background-color: #d1e7dd;
@@ -167,10 +168,4 @@ body, html {
 .compact-text p {
   margin: 0;
   /* or margin-bottom: 0.25rem; etc. */
-}
-/* Override dark mode for assistant messages */
-body.dark-mode .chat-message.assistant {
-  color: black !important;
-  background-color: #fff !important;
-  border-color: #ccc !important;
 }
