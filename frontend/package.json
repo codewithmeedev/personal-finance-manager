@@ -11,6 +11,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "esbuild": ">=0.25.0",
     "@hookform/resolvers": "^3.10.0",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
@@ -29,6 +30,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "esbuild": ">=0.25.0",
     "@eslint/js": "^9.17.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
