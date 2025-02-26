@@ -1,53 +1,40 @@
-# app/routers/contact.py
+import os
+import requests
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
 from app.schemas import ContactRequest
 from dotenv import load_dotenv
-import os
-import requests
 
 load_dotenv()
 
-router = APIRouter(
-    prefix="/contact",
-    tags=["Contact"]
-)
+router = APIRouter(prefix="/contact", tags=["Contact"])
 
-def send_contact_email_sendinblue(recipient: str, subject: str, content: str):
-    api_key = os.getenv("SENDINBLUE_API_KEY")
-    sender_email = os.getenv("SENDER_EMAIL")
-    url = "https://api.sendinblue.com/v3/smtp/email"
-    data = {
-        "sender": {"name": "FinanceManager", "email": sender_email},
-        "to": [{"email": recipient}],
+
+def send_contact_email_via_service(recipient: str, subject: str, content: str):
+    email_service_url = os.getenv(
+        "EMAIL_SERVICE_URL", "http://email_microservice:9002").strip()
+    sender_email = os.getenv("SENDER_EMAIL", "default@example.com")
+    payload = {
+        "sender_name": "FinanceManager",
+        "sender_email": sender_email,
+        "recipient_email": recipient,
         "subject": subject,
-        "textContent": content,
+        "content": content,
     }
-    headers = {
-        "api-key": api_key,
-        "Content-Type": "application/json",
-    }
-    response = requests.post(url, json=data, headers=headers)
-    if response.status_code >= 400:
-        raise Exception(f"Sendinblue error: {response.text}")
-    return response
+    try:
+        response = requests.post(
+            f"{email_service_url}/send-email", json=payload)
+        response.raise_for_status()
+        print(f"Email sent: {response.json()}")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send message.")
+
 
 @router.post("/", status_code=200)
-async def contact_us(
-    contact: ContactRequest,
-    background_tasks: BackgroundTasks
-):
-    """
-    Accept a contact message from the user and send it to the designated recipient.
-    """
+async def contact_us(contact: ContactRequest, background_tasks: BackgroundTasks):
     recipient = os.getenv("CONTACT_RECIPIENT_EMAIL")
     subject = f"New Contact Message from {contact.name}"
-    content = (
-        f"Name: {contact.name}\n"
-        f"Email: {contact.email}\n\n"
-        f"Message:\n{contact.message}"
-    )
-    try:
-        background_tasks.add_task(send_contact_email_sendinblue, recipient, subject, content)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to send message.")
+    content = f"Name: {contact.name}\nEmail: {contact.email}\n\nMessage:\n{contact.message}"
+    background_tasks.add_task(
+        send_contact_email_via_service, recipient, subject, content)
     return {"msg": "Your message has been sent. We'll get back to you soon."}

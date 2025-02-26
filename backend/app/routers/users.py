@@ -227,6 +227,29 @@ async def delete_user(user_id: str, current_user: dict = Depends(get_current_use
     return {"message": f"User {user_id} has been deleted successfully."}
 
 
+def send_reset_email_via_service(email: str, reset_link: str):
+    """
+    Sends a password reset email via the email microservice.
+    """
+    # Get the email service URL from environment variables
+    email_service_url = os.getenv("EMAIL_SERVICE_URL", "http://email_microservice:9002").strip()
+    sender_email = os.getenv("SENDER_EMAIL", "default@example.com")
+    subject = "Password Reset Request"
+    content = f"Please click the following link to reset your password:\n\n{reset_link}"
+    payload = {
+        "sender_name": "FinanceManager",
+        "sender_email": sender_email,
+        "recipient_email": email,
+        "subject": subject,
+        "content": content,
+    }
+    try:
+        response = requests.post(f"{email_service_url}/send-email", json=payload)
+        response.raise_for_status()
+        print(f"Email sent: {response.json()}")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
 @router.post("/forgot-password")
 async def forgot_password(
     request: ForgotPasswordRequest,
@@ -238,60 +261,31 @@ async def forgot_password(
     If the email is registered, a reset token is generated and an email is sent with a reset link.
     For security, the endpoint always returns the same message.
     """
-    # Extract email from the request model
     email = request.email
-    print(f"Received forgot-password request for email: {email}")  # Debug print
-
-    # Find the user by email
+    print(f"Received forgot-password request for email: {email}")
+    
+    # Look up the user by email
     user = await users_collection.find_one({"email": email})
     if not user:
-        print("No user found for that email.")  # Debug print
-        # Always return the same message for security reasons.
+        print("No user found for that email.")
         return {"msg": "If that email is registered, a reset link has been sent."}
 
-    # Generate a temporary reset token (for password resets)
+    # Generate a temporary reset token for password reset
     reset_token = create_token(
         data={"sub": str(user["_id"])},
-        expires_delta=timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES),
+        expires_delta=timedelta(minutes=int(os.getenv("RESET_TOKEN_EXPIRE_MINUTES", "30"))),
         token_type="reset"
     )
-    print(f"Generated reset token: {reset_token}")  # Debug print
-
-    # Construct the reset link (make sure this is your actual frontend URL)
+    print(f"Generated reset token: {reset_token}")
+    
+    # Construct the reset link (update URL as needed for production)
     reset_link = f"http://localhost:3000/reset-password?token={reset_token}"
-    print(f"Reset link: {reset_link}")  # Debug print
-
-    # Schedule sending the email in a background task
-    background_tasks.add_task(send_reset_email, email, reset_link)
-
+    print(f"Reset link: {reset_link}")
+    
+    # Schedule sending the email via the email microservice in a background task
+    background_tasks.add_task(send_reset_email_via_service, email, reset_link)
+    
     return {"msg": "If that email is registered, a reset link has been sent."}
-
-async def send_reset_email(email: str, reset_link: str):
-    sender = os.getenv("SENDER_EMAIL")
-    api_key = os.getenv("SENDINBLUE_API_KEY")
-    subject = "Password Reset Request"
-    content = f"Please click the following link to reset your password:\n\n{reset_link}"
-    
-    # Sendinblue API endpoint for transactional emails
-    url = "https://api.sendinblue.com/v3/smtp/email"
-    
-    data = {
-        "sender": {"name": "FinanceManager", "email": sender},
-        "to": [{"email": email}],
-        "subject": subject,
-        "textContent": content,
-    }
-    
-    headers = {
-        "api-key": api_key,
-        "Content-Type": "application/json",
-    }
-    
-    try:
-        response = requests.post(url, json=data, headers=headers)
-        print(f"Email sent to {email}: Status Code {response.status_code}")
-    except Exception as e:
-        print(f"Error sending email: {e}")
 
 @router.post("/reset-password")
 async def reset_password(
