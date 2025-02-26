@@ -7,9 +7,6 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    # environment:
-    #   - LLM_SERVICE_URL=http://llm_microservice:9000
-    #   - EMAIL_SERVICE_URL=http://email_microservice:9002
     depends_on:
       - llm_microservice
       - email_microservice
