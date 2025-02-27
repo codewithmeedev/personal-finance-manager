@@ -42,9 +42,9 @@ Key components include:
 - **Frontend (React + TypeScript):** An interactive interface for managing records and user accounts.
 - **Backend (FastAPI):** A RESTful API handling authentication, financial tracking, and AI-driven insights.
 - **MongoDB:** Stores user and financial data in a flexible document-based schema.
-- **Sendinblue:** Manages email sending for contact forms and password recovery.
-- **Hugging Face Phi 3 Mini:** Powers the personal assistant functionality, delivering tailored financial recommendations.
-- **SLR Service (FastAPI):** A separate microservice (if applicable) for specialized tasks.
+- **Sendinblue:** Manages email sending for contact forms and password recovery (a separate microservice).
+- **Hugging Face Phi 3 Mini:** Powers the personal assistant functionality, delivering tailored financial recommendations (a separate microservice).
+- **SLR Service (FastAPI):** A separate microservice for specialized tasks.
 
 ---
 
@@ -94,8 +94,6 @@ Copy the provided `.env.example` file to create your own `.env` file at the proj
 ```bash
 cp .env.example .env
 ```
-
-_Ensure your `.env` file is excluded from version control to keep sensitive information secure._
 
 ---
 
@@ -156,8 +154,6 @@ Run frontend tests :
 ```bash
 docker-compose run --rm frontend npm test
 ```
-
-These commands ensure that tests run in an environment identical to your production setup.
 
 ---
 
